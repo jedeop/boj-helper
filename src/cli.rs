@@ -14,7 +14,8 @@ impl Cli {
         let cli = Cli::parse();
 
         match &cli.command {
-            Commands::New { id } => Commands::new(&id).await?,
+            Commands::New { id } => Commands::run_new(&id).await?,
+            Commands::Test { id } => Commands::run_test(&id)?,
         };
 
         Ok(())
@@ -27,11 +28,20 @@ enum Commands {
         #[clap(value_parser)]
         id: String,
     },
+    Test {
+        #[clap(value_parser)]
+        id: String,
+    },
 }
 
 impl Commands {
-    async fn new(id: &str) -> Result<()> {
+    async fn run_new(id: &str) -> Result<()> {
         Problem::create(id).await?;
+        Ok(())
+    }
+    fn run_test(id: &str) -> Result<()> {
+        let p = Problem::read(id)?;
+        p.run_examples()?;
         Ok(())
     }
 }

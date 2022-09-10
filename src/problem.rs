@@ -1,4 +1,9 @@
-use std::{fs, path::Path};
+use std::{
+    fs,
+    io::Write,
+    path::{Path, PathBuf},
+    process::{Command, Stdio},
+};
 
 use anyhow::{Context, Result};
 use scraper::{Html, Selector};
@@ -61,6 +66,61 @@ impl Problem {
             title,
             examples,
         })
+    }
+
+    pub fn read(id: &str) -> Result<Problem> {
+        let path = Path::new("./problems").join(id).join("problem.toml");
+        let data = fs::read(path)?;
+        let problem: Problem = toml::from_slice(&data)?;
+
+        Ok(problem)
+    }
+
+    pub fn run(&self, input: &str) -> Result<String> {
+        let mut child = Command::new("python")
+            .arg(self.get_solution_path())
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .context("Failed to spawn child process")?;
+
+        let input = input.to_string();
+
+        let mut stdin = child.stdin.take().context("Failed to open stdin")?;
+        std::thread::spawn(move || {
+            stdin
+                .write_all(input.as_bytes())
+                .expect("Failed to write to stdin");
+        });
+
+        let output = child.wait_with_output().context("Failed to read stdout")?;
+        let string = String::from_utf8(output.stdout)?;
+
+        Ok(string)
+    }
+
+    pub fn run_examples(&self) -> Result<()> {
+        for (i, example) in self.examples.iter().enumerate() {
+            let result = self.run(&example.input)?;
+            println!("[example{}]", i + 1);
+            println!("< input\n{}", example.input.trim());
+            println!("= expected output\n{}", example.output.trim());
+            println!("> output\n{}", result.trim());
+            if result == example.output {
+                println!("[Passed]");
+            } else {
+                println!("[Failed]");
+            }
+        }
+
+        Ok(())
+    }
+
+    fn get_path(&self) -> PathBuf {
+        Path::new("./problems").join(&self.id)
+    }
+    fn get_solution_path(&self) -> PathBuf {
+        self.get_path().join("solution.py")
     }
 }
 
