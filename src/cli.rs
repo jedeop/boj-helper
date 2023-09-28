@@ -14,8 +14,8 @@ impl Cli {
         let cli = Cli::parse();
 
         match &cli.command {
-            Commands::New { id } => Commands::run_new(&id).await?,
-            Commands::Test { id } => Commands::run_test(&id)?,
+            Commands::New { id } => Commands::run_new(id).await?,
+            Commands::Test { id } => Commands::run_test(id)?,
         };
 
         Ok(())

@@ -27,8 +27,8 @@ impl Problem {
 
         let contents = toml::to_string(&problem).unwrap();
 
-        fs::write(&path.join("problem.toml"), contents)?;
-        fs::write(&path.join("solution.py"), "")?;
+        fs::write(path.join("problem.toml"), contents)?;
+        fs::write(path.join("solution.py"), "")?;
 
         Ok(())
     }
