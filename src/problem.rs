@@ -5,7 +5,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
@@ -72,6 +72,14 @@ impl Problem {
         let path = Path::new("./problems").join(id).join("problem.toml");
         let data = fs::read(path)?;
         let problem: Problem = toml::from_slice(&data)?;
+
+        if problem.id != id {
+            bail!(
+                "Cannot read problem info: id mismatch ({} != {})",
+                id,
+                problem.id
+            );
+        }
 
         Ok(problem)
     }
